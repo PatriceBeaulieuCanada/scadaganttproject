@@ -45,7 +45,7 @@ const GanttView =()=>{
             allowTaskbarEditing: true,            
         };
 
-        const toolbar = ['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'ExpandAll', 'CollapseAll','ZoomIn','ZoomOut','ZoomToFit','PdfExport','ExcelExport'];
+        const toolbar = ['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'ExpandAll', 'CollapseAll','ZoomIn','ZoomOut','ZoomToFit','ExcelExport'];
 
          const labelSettings = {
              rightLabel: 'notes'
