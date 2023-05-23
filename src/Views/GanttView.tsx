@@ -1,7 +1,8 @@
-import { GanttComponent,TaskFieldsModel, ColumnsDirective,ColumnDirective, Inject, Edit, Selection, Sort,Filter,Toolbar} from '@syncfusion/ej2-react-gantt';
-import { useState,useMemo,useEffect} from 'react'
+import { GanttComponent,TaskFieldsModel, ColumnsDirective,ColumnDirective, Inject, 
+        PdfExport,Edit, Selection, Sort,Filter,Toolbar,ExcelExport} from '@syncfusion/ej2-react-gantt';
+import { useState,useMemo,useRef} from 'react'
 import UseCallApi from '../Hooks/UseCallApi';
-
+import DataRaw from '../DataRaw';
 
 const projectResources = [
     { resourceId: 2, resourceName: 'Patrice Simard' },
@@ -11,10 +12,10 @@ const projectResources = [
 ];
 
 
+
 const GanttView =()=>{
-
-    const param = { action: '', ganttDataSources:[],newTaskData:{}}
-
+    const ganttChart : any = useRef();
+    const param = { action: '', ganttDataSources:[],newTaskData:{},deleteData:{eraseData:[{}],modifyData:[{}]}}
     const [data,setData] = useState([])
 
     useMemo(() =>{
@@ -44,7 +45,7 @@ const GanttView =()=>{
             allowTaskbarEditing: true,            
         };
 
-        const toolbar = ['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'ExpandAll', 'CollapseAll','ZoomIn','ZoomOut','ZoomToFit'];
+        const toolbar = ['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'ExpandAll', 'CollapseAll','ZoomIn','ZoomOut','ZoomToFit','PdfExport','ExcelExport'];
 
          const labelSettings = {
              rightLabel: 'notes'
@@ -57,15 +58,15 @@ const GanttView =()=>{
 
         const queryTaskbarInfo = (args:any) =>{
             
-            if (args.data.progress == 50) {
+            if (args.data.progress <= 50) {
                 args.progressBarBgColor = "red";
-            } else if (args.data.progress == 70) {
+            } else if (args.data.progress > 50 && args.data.progress < 80) {
                 args.progressBarBgColor = "yellow";
-            } else if (args.data.progress == 80) {
+            } else if (args.data.progress >= 80) {
                 args.progressBarBgColor = "lightgreen";
             }
 
-            console.log(args.progressBarBgColor)
+            //console.log(args.progressBarBgColor)
         }
 
         const actionComplete = async (arg:any) => {
@@ -89,7 +90,23 @@ const GanttView =()=>{
             }
     
             if (arg.requestType === 'delete') {
-                //console.log("on efface")
+                console.log("on efface")
+                //console.log(arg)
+
+                const eraseDate : any=[]
+
+                arg.data.map((v:any,i:any)=>{
+                    return(
+                        //console.log(v.taskData),
+                        eraseDate.push(v.taskData)
+                    )
+                })
+                
+                param.action = 'deleteProjets'
+                param.deleteData.eraseData = eraseDate
+                param.deleteData.modifyData = arg.modifiedTaskData
+                setData(await UseCallApi(param))
+                
             }
 
             if (arg.requestType === 'refresh') {
@@ -98,11 +115,50 @@ const GanttView =()=>{
                 //setData(await UseCallApi(param))
             }
         
-        };        
+        };
+
+        const updateValue = async(arg:any) =>{
+            param.action = 'setProjets'
+            param.ganttDataSources = arg.modifiedTaskData
+            setData(await UseCallApi(param))
+
+        }
+
+        const pdfExpComplete= (args:any) => {
+            //This event will be triggered when pdf exporting.
+                args.promise.then((e:any) => {
+                //In this `then` function, we can get blob data through the arguments after promise resolved.
+                exportBlob(e.blobData);
+            });
+            };
+
+            const exportBlob = (blob:any) => {
+                let a = document.createElement('a');
+                document.body.appendChild(a);
+                a.style.display = 'none';
+                let url = window.URL.createObjectURL(blob);
+                a.href = url;
+                a.download = 'Export';
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+    }
+        
+        const toolbarClick = (args: any) =>{ 
+            const rep = args.item.id
+		    const sub = 'pdfexport'           
+            if (rep.includes(sub)) {
+                ganttChart.current.pdfExport(null,null,null,true);
+             }
+             
+             const sub1 = 'excelexport'           
+             if (rep.includes(sub1)) {
+                 ganttChart.current.excelExport();
+              }
+        }
         
     return(
         <div>
-            
             <GanttComponent dataSource={data} 
             height="650px" 
             taskFields={taskFields}
@@ -113,10 +169,15 @@ const GanttView =()=>{
             labelSettings={labelSettings}
             allowSorting={true}
             allowFiltering={true}
-            toolbar = {toolbar }
+            allowPdfExport={true}
+            pdfExportComplete={pdfExpComplete}
+            allowExcelExport={true}
+            toolbar = {toolbar}
+            toolbarClick={toolbarClick}
             rowHeight={45}
             queryTaskbarInfo={queryTaskbarInfo}
             actionComplete={actionComplete}
+            ref={ganttChart}
             >
                 <ColumnsDirective>
                     <ColumnDirective field='taskId' headerText='Id'/>
@@ -130,10 +191,9 @@ const GanttView =()=>{
                     <ColumnDirective field='notes' headerText='Notes'/>
                 </ColumnsDirective>
                 
-                <Inject services={[Edit, Selection, Sort,Filter,Toolbar]}/>
+                <Inject services={[Edit, Selection, Sort,Filter,Toolbar,PdfExport,ExcelExport]}/>
             </GanttComponent>
         </div>
-
 )}
 
 export default GanttView

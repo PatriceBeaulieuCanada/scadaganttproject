@@ -20,7 +20,7 @@ const UseCallApi=async(param:any) =>{
 	 			
 	 	const ganttDataSources =param.ganttDataSources
 	 		
-        console.log(ganttDataSources)
+        //console.log(ganttDataSources)
 
          try {
 	 		const modifProject =axios.put('http://itvxscada:5001/api/GanttProject/setProjets',ganttDataSources,config);		
@@ -38,6 +38,9 @@ const UseCallApi=async(param:any) =>{
                
         const ganttDataSource = param.newTaskData           
 
+
+        //console.log(ganttDataSource)
+
         try {
             const addProject =axios.post('http://itvxscada:5001/api/GanttProject/addProjets',ganttDataSource,config);		
             return (await addProject).data;
@@ -46,7 +49,26 @@ const UseCallApi=async(param:any) =>{
             console.error(err);
             return [];
         }        
-    }	
+    }
+    
+    if(param.action=='deleteProjets') {
+
+        const config = { headers: { 'Content-Type': 'application/json' } };
+               
+        const deleteData = param.deleteData           
+
+        //console.log(ganttDataSource)
+
+        try {
+            const deleteProject =axios.put('http://itvxscada:5001/api/GanttProject/deleteProjets',deleteData,config);
+            return (await deleteProject).data;		
+            
+        } catch (err) {
+            // Handle Error Here
+            console.error(err);
+            return [];
+        }        
+    }
 
 }
 
